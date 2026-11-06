@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Bridge Builder Chaos - High-Octane Physics Arcade Game</title>
+  <meta name="description" content="Hold to build, release to bridge the chasms, and survive chaotic hazards! Addictive physics browser arcade game.">
+  <meta name="theme-color" content="#ff0055">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Open Graph / Viral Sharing Meta -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Bridge Builder Chaos">
+  <meta property="og:description" content="Can you beat my high score in Bridge Builder Chaos? Stretch, land, survive the abyss!">
+  <meta property="twitter:card" content="summary_large_image">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="game-wrapper">
+    <!-- Game Canvas -->
+    <div id="canvas-container">
+      <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast-notification" class="toast">🎯 PERFECT!</div>
+
+    <!-- 1. START SCREEN -->
+    <div id="screen-start" class="screen active">
+      <div class="start-header">
+        <div class="brand-badge">⚡ CHAOS EDITION</div>
+        <div class="top-bar-icons">
+          <button id="btn-mute" class="icon-btn" title="Toggle Sound">🔊</button>
+          <button id="btn-garage" class="icon-btn" title="Garage & Skins">🏎️</button>
+          <button id="btn-achievements" class="icon-btn" title="Achievements">🏆</button>
+          <button id="btn-help" class="icon-btn" title="How to Play">❓</button>
+        </div>
+      </div>
+
+      <div class="start-hero">
+        <!-- Challenge Friend banner if opened with custom seed/score -->
+        <div id="challenge-banner" class="challenge-banner">
+          🔥 FRIEND CHALLENGE! Can you beat their score of <span id="challenger-score-val">0</span>?
+        </div>
+
+        <h1 class="game-logo">BRIDGE BUILDER<br>CHAOS</h1>
+        <p class="game-tagline">Stretch the bridge. Nail the bullseye. Survive the hazards.</p>
+
+        <!-- High Score Quick Pill -->
+        <div class="start-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">ENDLESS</span>
+            <span id="val-high-endless" class="stat-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">60s RUSH</span>
+            <span id="val-high-rush" class="stat-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">DAILY</span>
+            <span id="val-high-daily" class="stat-val">0</span>
+          </div>
+        </div>
+
+        <!-- Mode Selection Buttons -->
+        <div class="mode-buttons-container">
+          <button id="btn-play-endless" class="btn-mode btn-mode-primary">
+            <span>🚀 PLAY ENDLESS CHAOS</span>
+            <span class="mode-badge">CLASSIC</span>
+          </button>
+          <button id="btn-play-rush" class="btn-mode btn-mode-secondary">
+            <span>⏱️ CHAOS RUSH (60s)</span>
+            <span class="mode-badge">TIME ATTACK</span>
+          </button>
+          <button id="btn-play-daily" class="btn-mode btn-mode-daily">
+            <span>📅 DAILY CHALLENGE</span>
+            <span class="mode-badge">WORLD SEED</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Currency Pill -->
+      <div class="hud-gem-pill" style="align-self: center;">
+        <span>💎</span> <span class="gem-count-text">0</span> CHAOS GEMS
+      </div>
+    </div>
+
+    <!-- 2. GAMEPLAY HUD -->
+    <div id="screen-gameplay" class="screen">
+      <div class="hud-top">
+        <div class="hud-left">
+          <div class="hud-score-box">
+            <span class="hud-score-label">SCORE</span>
+            <span id="hud-score" class="hud-score-val">0</span>
+          </div>
+          <div id="hud-combo" class="hud-combo-badge">2x COMBO!</div>
+          <div id="hud-wind" class="hud-wind-badge">WIND: → 18 km/h</div>
+        </div>
+
+        <div class="hud-center">
+          <div id="hud-timer-container" class="hud-timer">
+            ⏱️ <span id="hud-timer-val">60</span>s
+          </div>
+          <div class="hud-fever-container" title="Chaos Fever Meter">
+            <div id="hud-fever-bar" class="hud-fever-bar"></div>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="hud-gem-pill">
+            <span>💎</span> <span class="gem-count-text">0</span>
+          </div>
+          <button id="btn-hud-restart" class="hud-btn" title="Quick Restart">🔄</button>
+          <button id="btn-hud-pause" class="hud-btn" title="Pause Game">⏸️</button>
+        </div>
+      </div>
+
+      <!-- Dedicated Touch Action Button on Bottom -->
+      <div class="hud-bottom">
+        <button id="btn-action-build" class="btn-action-build">HOLD TO BUILD</button>
+      </div>
+    </div>
+
+    <!-- 3. PAUSE SCREEN -->
+    <div id="screen-pause" class="screen">
+      <div class="pause-card">
+        <h2 class="pause-title">GAME PAUSED</h2>
+
+        <div class="pause-settings-list">
+          <div class="setting-toggle-row">
+            <span>Sound Effects (SFX)</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-sfx" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-row">
+            <span>Music (BGM)</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-music" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-toggle-row">
+            <span>Screen Shake</span>
+            <label class="switch">
+              <input type="checkbox" id="toggle-shake" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pause-actions">
+          <button id="btn-pause-resume" class="btn-gameover-primary">RESUME</button>
+          <button id="btn-pause-restart" class="btn-gameover-secondary">RESTART RUN</button>
+          <button id="btn-pause-menu" class="btn-gameover-secondary">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. GAME OVER SCREEN -->
+    <div id="screen-gameover" class="screen">
+      <div class="gameover-card">
+        <div class="gameover-title">CRASHED!</div>
+        <div id="gameover-new-record" class="new-record-badge">🏆 NEW RECORD!</div>
+
+        <div class="gameover-score-container">
+          <div class="gameover-score-label">FINAL SCORE</div>
+          <div id="gameover-score" class="gameover-score-val">0</div>
+          <div id="gameover-rank" class="gameover-rank-badge">🔨 Apprentice Planker</div>
+        </div>
+
+        <div class="gameover-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">BEST</span>
+            <span id="gameover-highscore" class="stat-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">MAX COMBO</span>
+            <span id="gameover-maxcombo" class="stat-val">0x</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">GEMS</span>
+            <span id="gameover-gems" class="stat-val">+0</span>
+          </div>
+        </div>
+
+        <div class="gameover-actions">
+          <button id="btn-gameover-retry" class="btn-gameover-primary">PLAY AGAIN</button>
+          <div class="gameover-secondary-row">
+            <button id="btn-gameover-share" class="btn-gameover-secondary">🔥 CHALLENGE</button>
+            <button id="btn-gameover-card" class="btn-gameover-secondary">📸 SAVE CARD</button>
+          </div>
+          <div class="gameover-secondary-row">
+            <button id="btn-gameover-garage" class="btn-gameover-secondary">🏎️ GARAGE</button>
+            <button id="btn-gameover-menu" class="btn-gameover-secondary">🏠 MENU</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. GARAGE MODAL -->
+    <div id="modal-garage" class="modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🏎️ GARAGE & SKINS</span>
+        </div>
+        <div class="hud-gem-pill">
+          <span>💎</span> <span class="gem-count-text">0</span>
+        </div>
+        <button class="modal-close">&times;</button>
+      </div>
+
+      <div class="garage-tabs">
+        <button id="tab-vehicles" class="garage-tab-btn active">VEHICLES</button>
+        <button id="tab-bridges" class="garage-tab-btn">BRIDGE SKINS</button>
+      </div>
+
+      <div id="garage-items-grid" class="garage-grid">
+        <!-- Injected via UI.renderGarageItems -->
+      </div>
+    </div>
+
+    <!-- 6. ACHIEVEMENTS MODAL -->
+    <div id="modal-achievements" class="modal">
+      <div class="modal-header">
+        <div class="modal-title">🏆 ACHIEVEMENTS</div>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div id="achievements-grid" class="achievements-grid">
+        <!-- Injected via UI.openAchievements -->
+      </div>
+    </div>
+
+    <!-- 7. HOW TO PLAY MODAL -->
+    <div id="modal-howtoplay" class="modal">
+      <div class="modal-header">
+        <div class="modal-title">❓ HOW TO PLAY</div>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div>
+        <div class="howtoplay-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>HOLD TO BUILD</h4>
+            <p>Press and hold the screen, spacebar, or the HOLD button. Your bridge grows upward with metallic tension!</p>
+          </div>
+        </div>
+        <div class="howtoplay-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>RELEASE TO DROP</h4>
+            <p>Release when you think the bridge is long enough to span the chasm. If it falls short or overshoots, you crash!</p>
+          </div>
+        </div>
+        <div class="howtoplay-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>HIT THE RED BULLSEYE</h4>
+            <p>Landing in the red glowing sweet spot triggers a <strong>PERFECT!</strong> combo multiplier. Reach 3x for <strong>CHAOS FEVER</strong>!</p>
+          </div>
+        </div>
+        <div class="howtoplay-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>SURVIVE THE CHAOS</h4>
+            <p>Watch out for crosswinds, oscillating pillars, earthquakes, and low gravity modifiers. Collect Chaos Gems to unlock new rides!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- End #game-wrapper -->
+
+  <!-- Modular Scripts in dependency order -->
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/vehicles.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/chaos.js"></script>
+  <script src="js/share.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
